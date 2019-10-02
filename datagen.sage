@@ -1,23 +1,34 @@
 from sage.all import *
 from sage.combinat.matrices.latin import *
-from sage.misc.prandom import randint
-from sage.misc.prandom import random
+from sage.misc.prandom import randint, random, sample
+from copy import deepcopy
+import platform
+import os
 
-N = 10      # Size of the square
-p = 0.3     # Percentage of holes
+N = int(sys.argv[1])               # Size of the square
+HOLE_PERCENTAGES = range(35, 51)   # Range of %age of holes to be generated
 
 # Generate a complete latin square
 gen = LatinSquare_generator(back_circulant(N))
 for i in range(20, randint(20, 50)): next(gen)
 square = next(gen)
-print(type(square))
 square = [[square.row(i)[j] + 1 for j in range(N)] for i in range(N)]
 
-# Put holes in the latin square
-square = [[square[i][j] if random() > p else 0 for j in range(N)] for i in range(N)]
-numholes = 0
-for i in range(N): numholes += square[i].count(0)
-print(square)
-print(numholes)
+# Put holes in the latin square and save it in a file
+dir = '.\\data\\feasible\\' if platform.system() == 'Windows' else './data/feasible/'
+if not os.path.exists(dir): os.makedirs(dir)
+for hole_percentage in HOLE_PERCENTAGES:
+    for i in range(10):
+        # Pick numholes unique elements from range(N*N) uniformly at random
+        numholes = (N * N * hole_percentage) // 100
+        holes = sample(range(N*N), numholes)
 
-# Save latin square
+        # Put holes in square
+        tempsquare = deepcopy(square)
+        for hole in holes: tempsquare[hole // N][hole % N] = 0
+
+        # Save square in a file
+        filename = 'o' + str(N) + 'hp' + str(hole_percentage) + '_' + str(i+1)
+        file = open(dir + filename, 'w')
+        file.write(repr(tempsquare))
+        file.close()
